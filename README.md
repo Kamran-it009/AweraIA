@@ -149,3 +149,147 @@
 | **Vector Store (if needed later)** | Pinecone, Weaviate |
 | **Function Calling** | OpenAI GPT-4o API |
 | **Auth** | JWT Authentication |
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+# **Integrating Python Function Calling into Node.js Website**
+
+## **Step-by-Step Guide to Integration**
+
+### **1️⃣ Set Up Express.js API Endpoints in Node.js**
+
+Fro example: Create an **Express.js API** to fetch soccer team insights and expose its endpoint:
+
+```javascript
+const express = require("express");
+const mongoose = require("mongoose");
+
+const app = express();
+app.use(express.json());
+
+const teamsData = {
+  "Lansdowne": { strengths: ["Strong attack"], weaknesses: ["Weak defense"] },
+  "Manhattan Celtic": { strengths: ["High possession"], weaknesses: ["Slow transitions"] }
+};
+
+// Expose the endpoint
+app.get("/api/team/:team_name", (req, res) => {
+    const teamName = req.params.team_name;
+    const data = teamsData[teamName] || { message: "Team not found" };
+    res.json(data);
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+```
+
+---
+
+### **2️⃣ Write Python Function to Call Express.js API**
+
+Use `requests` to fetch data from **Express.js API** and process it with **GPT-4o function calling**.
+
+```python
+import openai
+import requests
+
+openai.api_key = "your-openai-api-key"
+
+# Define the function to call the Express.js API
+def get_team_insights(team_name):
+    url = f"http://localhost:5000/api/team/{team_name}"
+    response = requests.get(url)
+    return response.json()
+
+
+# Function Details  
+functions = [
+    {
+        "name": "get_team_insights",
+        "description": "Fetch insights for a specific soccer team",
+        "parameters": {
+            "team_name": {"type": "string"}
+        }
+    }
+]
+
+# Calling AI Model (GPT-4o) to generate the response
+def generate_response(user_query):
+    chat_response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "You are a soccer analytics assistant."},
+            {"role": "user", "content": user_query}
+        ],
+        functions=functions
+    )
+
+  # Extract the function call and arguments
+    if chat_response["choices"][0]["message"].get("function_call"):
+        function_name = chat_response["choices"][0]["message"]["function_call"]["name"]
+        function_args = chat_response["choices"][0]["message"]["function_call"]["arguments"]
+        if function_name == "get_team_insights":
+            return get_team_insights(function_args["team_name"])
+    return "Sorry, I couldn't process your request."
+
+user_query = "What are the strengths and weaknesses of Lansdowne?"
+print(generate_response(user_query))
+```
+
+---
+
+### **3️⃣ Expose Python API Using FastAPI (Optional)**
+
+```python
+from fastapi import FastAPI
+import requests
+
+app = FastAPI()
+
+
+```
+
+---
+
+### **4️⃣ Connect Chatbot to Express.js and Python**
+
+Modify **Express.js** chatbot route to call **Python API**.
+
+```javascript
+const axios = require("axios");
+
+app.post("/api/chatbot", async (req, res) => {
+    const userQuery = req.body.query;
+
+    try {
+        const pythonAPIResponse = await axios.get(`http://localhost:8000/api/get_team_insights/Lansdowne`);
+        res.json({ response: pythonAPIResponse.data });
+    } catch (error) {
+        res.status(500).json({ error: "Python API call failed" });
+    }
+});
+```
+
+---
+
+## **Final Flow of Integration**
+
+```
+User Query → Chatbot (Node.js) → Python Function Calling → Express.js API → MongoDB → JSON Data → GPT-4o Summarized Response → User
+```
+
+
+
+
