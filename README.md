@@ -290,6 +290,6 @@ app.post("/api/chatbot", async (req, res) => {
 User Query → Chatbot (Node.js) → Python Function Calling → Express.js API → MongoDB → JSON Data → GPT-4o Summarized Response → User
 ```
 
-
+SAS
 
 
